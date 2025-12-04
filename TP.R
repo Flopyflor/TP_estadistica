@@ -10,6 +10,11 @@ library(plotly)
 set.seed(80)
 
 
+################################################
+##                Parte 1
+################################################
+
+
 # 5 - Suponga θ = 0.25. Evalúe coberturas empíricas mediante simulación Monte Carlo.
 # Observe qué ocurre para distintos valores de n.
 
@@ -70,4 +75,101 @@ for (n in n_s){
   print(paste0('El porcentaje de covertura con ', n, ' muestras en ', N, 
                ' simulaciones es de ', porcentaje_covertura, '%'))
 }
+
+
+################################################
+##                Parte 2
+################################################
+#3. Mostrar con gráficos, para Se = 0.9, Sp = 0.95 y θ = 0.25, cómo cambia p en
+# función de:
+#  (a) θ dejando fijos Se y Sp,
+#  (b) Se dejando fijos θ y Sp, y
+#  (c) Sp dejando fijos θ y Se.
+
+Se = 0.9
+Sp = 0.95
+tita = 0.25
+
+x_s = seq(0.01, 0.99, length.out = 100)
+
+p = function(Se, Sp, tita) {
+  return(Se * tita + (1-Sp)*(1-tita))
+}
+
+##################################
+# solución 1
+##################################
+
+p_by_Se = c()
+p_by_Sp = c()
+p_by_tita = c()
+
+
+for (x in x_s){
+  p_by_Se = c(p_by_Se, p(x, Sp, tita))
+  p_by_Sp = c(p_by_Sp, p(Se, x, tita))
+  p_by_tita = c(p_by_tita, p(Se, Sp, x))
+}
+
+valores_p = data.frame("x"=x_s, 'p_by_Se'=p_by_Se, 
+                       'p_by_Sp'=p_by_Sp, 'p_by_tita'=p_by_tita)
+
+ggplot(valores_p, aes(x, p_by_Se))+
+  geom_line(color='indianred', linewidth=1)+
+  labs(
+    title="p según Se",
+    x = "Se",
+    y = "p"
+  )+
+  theme_minimal()
+
+ggplot(valores_p, aes(x, p_by_Sp))+
+  geom_line(color='indianred', linewidth=1)+
+  labs(
+    title="p según Sp",
+    x = "Se",
+    y = "p"
+  )+
+  theme_minimal()
+
+ggplot(valores_p, aes(x, p_by_tita))+
+  geom_line(color='indianred', linewidth=1)+
+  labs(
+    title="p según tita",
+    x = "Se",
+    y = "p"
+  )+
+  theme_minimal()
+
+
+###########################################
+# solución 2
+###########################################
+
+
+valores_p = data.frame('x'=c(), 'p'=c(), variable=c())
+
+for (x in x_s){
+  p_by_Se = p(x, Sp, tita)
+  p_by_Sp = p(Se, x, tita)
+  p_by_tita = p(Se, Sp, x)
+  
+  valores_p = rbind(valores_p, list('x'=x, 'p'=p_by_Se, 'variable'='Se'),
+                    list('x'=x, 'p'=p_by_Sp, 'variable'='Sp'),
+                    list('x'=x, 'p'=p_by_tita, 'variable'='tita'))
+}
+
+valores_p$variable = as.factor(valores_p$variable)
+
+ggplot(valores_p, aes(x, p, color=variable))+
+  geom_line(linewidth=1)+
+  scale_color_manual(values = c("red", "blue", 'green'), 
+                     labels = c("Se", "Sp", 'Tita'))+
+  labs(
+    title="p según las variables",
+    x = "valor de la variable",
+    y = "p",
+    color='Parámetro variable'
+  )+
+  theme_minimal()
 
