@@ -180,7 +180,6 @@ ggplot(valores_ECM, aes(n, valor, color=ECM))+
   )+
   theme_minimal()
 
-
 ##########################################
 # 7. Realice simulaciones para comparar los valores teóricos hallados 
 # en el item 5 con los simulados.
@@ -249,11 +248,11 @@ tita = 0.25
 N_rep = 1000
 Se=0.9
 Sp= 0.95
-set.seed(80)
+
 p=calcular_p(Se,Sp,tita)
 
 calcular_tita_mom= function(t_vals,Se=0.9,Sp=0.95){
-  n=length(t_vals)
+  
   return((mean(t_vals)+Sp-1)/(Se+Sp-1))
 }
 
@@ -295,11 +294,12 @@ inicios_percentil=c()
 finales_percentil=c()
 muestras_bootstrap=rep(NaN,N_rep)
 
-calcular_intervalo_bootstrap_percentil=function(n,Se=0.9,Sp=0.95,tita=0.25,N_rep=200){
+calcular_intervalo_bootstrap_percentil=function(n,Se=0.9,Sp=0.95,tita=0.25,N_rep=10){
   muestras_bootstrap=rep(NaN,N_rep)
   p=calcular_p(Se,Sp,tita)
   for (i in 1:N_rep){
     t_vals= rbinom(n,1,p)
+    
     muestras_bootstrap[i]=calcular_tita_mom(t_vals)
   }
   
@@ -308,6 +308,7 @@ calcular_intervalo_bootstrap_percentil=function(n,Se=0.9,Sp=0.95,tita=0.25,N_rep
     'fin' = quantile(muestras_bootstrap,0.95)
   ))
 }
+
 ######################################
 #10. Construya intervalos de confianza de nivel asint´otico 0.95 para θ basado en ˆθMoM.
 
@@ -320,25 +321,63 @@ calcular_intervalo_tita_mom=function(n,Se=0.9,Sp=0.95,tita=0.25,alfa=0.05){
   
   tita_mom= calcular_tita_mom(t_vals)
   
-  desvio_standar= sqrt((p*(1-p))/(n*(Se+Sp-1)**2))
+  desvio_standar= sqrt((p*(1-p))/((Se+Sp-1)**2))
   
   return(list(
     'inicio'= tita_mom-z_alfa*desvio_standar/sqrt(n),
     'fin' = tita_mom+z_alfa*desvio_standar/sqrt(n)
   ))
 }
+
 ####################################
 #11. Con simulaciones, compare coberturas y longitudes promedio de los intevalos de confianza de los items anteriores.
 
 n_s = c(10, 50, 100, 200, 500) # cantidad de muestras que vamos a tomar
+tita=0.25
+Se=0.9
+Sp=0.95
+N_rep
+coverturas = data.frame(N=c(),n=c(), inicio=c(),final=c(),cubre=c(), tipo=c())
+for (n in n_s){
+  for (i in 1:N_rep){
+    
+    #Intervalo Boostrap percentil
+    intervalo_percentil = calcular_intervalo_bootstrap_percentil(n)
+    inicio = intervalo_percentil$inicio
+    fin = intervalo_percentil$fin
+    cubre= inicio <= tita && tita <= fin
+    
+    coverturas = rbind(coverturas, 
+                       list('N'=i, 'n'=n,'inicio'=inicio, 
+                            'fin'=fin, 'cubre'=cubre,'tipo'='percentil'))
+    
+    #Intervalo asintotico tita mom
+    intervalo_tita_mom = calcular_intervalo_tita_mom(n)
+    inicio = intervalo_tita_mom$inicio
+    fin = intervalo_tita_mom$fin
+    cubre = inicio <= tita && tita <= fin
+    
+    coverturas = rbind(coverturas, 
+                       list('N'=i, 'n'=n,'inicio'=inicio, 
+                            'fin'=fin, 'cubre'=cubre,'tipo'='tita_mom'))
+  }
+  }
 
-datos = data.frame(n=c(), inicio=c(),final=c(), tipo=c())
 
-
-
-
-
-
+for (n in n_s){
+  
+  porcentaje_covertura_percentil = sum(coverturas[coverturas$n == n & coverturas$tipo=='percentil', ]$cubre)/N_rep*100
+  print(paste0('El porcentaje de covertura con ', n, ' muestras en ', N_rep, ' para los intervalos bootrstrap percentil', 
+               ' simulaciones es de ', porcentaje_covertura_percentil, '%'))
+  
+  
+  porcentaje_covertura_tita_mom = sum(coverturas[coverturas$n == n & coverturas$tipo=='tita_mom', ]$cubre)/N_rep*100
+  print(paste0('El porcentaje de covertura con ', n, ' muestras en ', N_rep,  ' para los intervalos basados en tita mom',
+               ' simulaciones es de ', porcentaje_covertura_tita_mom, '%'))
+  cat("\n")
+  
+}
+View(coverturas)
 
 
 
