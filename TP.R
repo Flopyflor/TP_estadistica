@@ -14,7 +14,7 @@ set.seed(80)
 ##                Parte 1
 ################################################
 
-
+################################################
 # 5 - Suponga θ = 0.25. Evalúe coberturas empíricas mediante simulación Monte Carlo.
 # Observe qué ocurre para distintos valores de n.
 
@@ -61,8 +61,9 @@ plot = ggplot(coverturas_graph, aes(y = N, x=inicio, xend=fin, color=cubre, fram
   geom_vline(xintercept=tita, linetype='dashed', color="black")+
   scale_color_manual(values = c("red", "blue"), labels = c("No cubre", "Cubre"))+
   labs(
-    title="Intervalos de confianza para tita, \nde las primeras 100 simulaciones",
-    x = "Valor de tita",
+    title=expression("Intervalos de confianza para"~theta~
+                       ", \nde las primeras 100 simulaciones"),
+    x = expression("Valor de"~theta),
     y = "Número de simulación",
     color="Cubre?"
   )+
@@ -80,7 +81,9 @@ for (n in n_s){
 
 
 ################################################
-##                Parte 2
+##                Parte 2.1
+################################################
+
 ################################################
 #3. Mostrar con gráficos, para Se = 0.9, Sp = 0.95 y θ = 0.25, cómo cambia p en
 # función de:
@@ -132,8 +135,7 @@ plot = ggplot(valores_p, aes(x, p, color=variable))+
 ggplotly(plot)
 
 
-################################################
-##                Parte 2
+
 ################################################
 # 6. Grafíque el ECM en función de n y compárelo con el ECM del test perfecto
 
@@ -180,7 +182,7 @@ ggplot(valores_ECM, aes(n, valor, color=ECM))+
   )+
   theme_minimal()
 
-##########################################
+################################################
 # 7. Realice simulaciones para comparar los valores teóricos hallados 
 # en el item 5 con los simulados.
 
@@ -241,30 +243,59 @@ ggplotly(plot)
 
 
 ##########################################
-#Para θ = 0.25, Se = 0.9 y Sp = 0.95, construya muestras bootstrap para observar la distribuci´on del estimador de
+#8. Para θ = 0.25, Se = 0.9 y Sp = 0.95, construya muestras bootstrap para observar la distribuci´on del estimador de
 #momentos de θ cuando n = 10. ¿Qué observa?
 
+# definiciones
 tita = 0.25
 N_rep = 1000
 Se=0.9
 Sp= 0.95
+n = 10
 
-p=calcular_p(Se,Sp,tita)
+p = calcular_p(Se,Sp,tita)
 
-calcular_tita_mom= function(t_vals,Se=0.9,Sp=0.95){
-  
+calcular_tita_mom = function(t_vals,Se=0.9,Sp=0.95){
   return((mean(t_vals)+Sp-1)/(Se+Sp-1))
 }
 
+# calculo el titahat que voy a usar para crear mis muestras bootstrap
+muestra_original = rbinom(n, 1, p)
+titahat = calcular_tita_mom(muestra_original)
+phat = calcular_p(Se, Sp, titahat)
+
+# inicializo el acumulador
 muestras_bootstrap=rep(NaN,N_rep)
 
+# creo mis muestras bootstrap, y calculo los estimadores
 for (i in 1:N_rep){
-  t_vals= rbinom(10,1,p) #n=10
+  t_vals= rbinom(n, 1, phat)
   muestras_bootstrap[i]=calcular_tita_mom(t_vals)
 } 
-x=seq(min(muestras_bootstrap),max(muestras_bootstrap),length.out =500)
-hist(muestras_bootstrap,freq=FALSE,main="Histograma de muestras bootstrap hat_tita_MOM")
-lines(x,dnorm(x,mean(muestras_bootstrap),sd(muestras_bootstrap)),lwd=2)
+
+media_b = mean(muestras_bootstrap)
+sd_b = sd(muestras_bootstrap)
+
+muestras_bootstrap = as.data.frame(muestras_bootstrap)
+
+ggplot(muestras_bootstrap, aes(x = muestras_bootstrap))+
+  geom_histogram(aes(y=after_stat(density)), bins=10,
+                 fill='lightblue', color='black')+
+  stat_function(
+    fun = dnorm,
+    args = list(mean = media_b, sd = sd_b),
+    color = "red",
+    linewidth = 1,
+    linetype = "dashed"
+  ) +
+  labs(
+    title = "Distribución Bootstrap con Curva Normal Superpuesta",
+    x = "Valor del estimador Bootstrap",
+    y = "Densidad"
+  )+
+  theme_minimal()
+
+
 #Ajustamos una normal porque el promedio se distribuye como una normal 
 #y sumar y dividir por ctes solo modifica la forma de la normal
 
@@ -278,16 +309,21 @@ for (i in 0:10){
   tita_mom_values[j+i]=(i/10+Sp-1)/(Se+Sp-1)
 }
 
-tita_mom_values #como vemos ninguno entre 0.3 y 0,4
+tita_mom_values #como vemos, ninguno entre 0.3 y 0,4
 
-#####################################
+################################################
+#                 Parte 2.2
+################################################
+
+################################################
 #9. Construya intervalos de confianza bootstrap percentil de θ basado en hat_θ_MoM. Para ello, realice simulaciones para
 #θ = 0.25, Se = 0.9 y Sp = 0.95 y distintos valores de n.
 
-N_rep=500
+N_rep = 1000 # cantidad de muestras bootstrap
 tita=0.25
 Se=0.9
 Sp=0.95
+
 
 #donde vamos a almacenar los intervalos
 inicios_percentil=c()
@@ -309,10 +345,24 @@ calcular_intervalo_bootstrap_percentil=function(n,Se=0.9,Sp=0.95,tita=0.25,N_rep
   ))
 }
 
+for (n in c(10, 100, 200, 500)){
+  # calculo titahat
+  titahat = #TODO
+  
+  for (i in 1:N_rep){
+    muestra_bootstrap = rbinom(n, 1, titahat)
+    
+    #guardo el titahathat calculado
+  }
+  
+  # calculo el IC para este n con los percentiles
+}
+
 
 
 ######################################
-#10. Construya intervalos de confianza de nivel asint´otico 0.95 para θ basado en ˆθMoM.
+#10. Construya intervalos de confianza de nivel asintótico 0.95 para θ basado 
+# en θMoMhat.
 
 calcular_intervalo_tita_mom=function(n,Se=0.9,Sp=0.95,tita=0.25,alfa=0.05){
   z_alfa=qnorm(alfa/2,lower.tail=FALSE) #cuantil a derecha
