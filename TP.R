@@ -22,12 +22,12 @@ tita = 0.25
 N = 500 # cantidad de simulaciones que vamos a hacer
 n_s = c(10, 50, 100, 200, 500) # cantidad de muestras que vamos a tomar
 
-calculo_covertura = function(tita_hat, n){
+calculo_intervalo = function(tita_hat, n){
   z = qnorm(0.025) # tomado por izquierda
-  variancia = sqrt(tita_hat*(1-tita_hat))
+  varianza = sqrt(tita_hat*(1-tita_hat))
   return(list(
-    'inicio'= tita_hat + z*variancia/sqrt(n),
-    'fin' = tita_hat - z*variancia/sqrt(n)
+    'inicio'= tita_hat + z*varianza/sqrt(n),
+    'fin' = tita_hat - z*varianza/sqrt(n)
   ))
 }
 
@@ -39,9 +39,9 @@ for (n in n_s){
     datos = rbinom(n, 1, tita) # simulamos datos
     tita_hat = mean(datos) # estimamos tita
     
-    covertura = calculo_covertura(tita_hat, n)
-    inicio = covertura$inicio
-    fin = covertura$fin
+    intervalo = calculo_intervalo(tita_hat, n)
+    inicio = intervalo$inicio
+    fin = intervalo$fin
     cubre = inicio <= tita && tita <= fin
     
     # guardamos los datos
@@ -94,23 +94,23 @@ Sp = 0.95
 tita = 0.25
 
 # valores de la variable
-x_s = seq(0.01, 0.99, length.out = 100)
+valores = seq(0.01, 0.99, length.out = 100)
 
-p = function(Se, Sp, tita) {
+calcular_p = function(Se, Sp, tita) {
   return(Se * tita + (1-Sp)*(1-tita))
 }
 
 valores_p = data.frame('x'=c(), 'p'=c(), variable=c())
 
 # calculo p y lo guardo
-for (x in x_s){
-  p_by_Se = p(x, Sp, tita)
-  p_by_Sp = p(Se, x, tita)
-  p_by_tita = p(Se, Sp, x)
+for (variable in valores){
+  p_by_Se = calcular_p(variable, Sp, tita)
+  p_by_Sp = calcular_p(Se, variable, tita)
+  p_by_tita = calcular_p(Se, Sp, variable)
   
-  valores_p = rbind(valores_p, list('x'=x, 'p'=p_by_Se, 'variable'='Se'),
-                    list('x'=x, 'p'=p_by_Sp, 'variable'='Sp'),
-                    list('x'=x, 'p'=p_by_tita, 'variable'='tita'))
+  valores_p = rbind(valores_p, list('x'=variable, 'p'=p_by_Se, 'variable'='Se'),
+                    list('x'=variable, 'p'=p_by_Sp, 'variable'='Sp'),
+                    list('x'=variable, 'p'=p_by_tita, 'variable'='tita'))
 }
 
 valores_p$variable = as.factor(valores_p$variable)
@@ -142,7 +142,7 @@ Se = 0.9
 Sp = 0.95
 
 ECM_imp = function(Se, Sp, tita, n){
-  p = Se*tita+(1-Sp)*(1-tita)
+  p = calcular_p(Se,Sp,tita)
   return(p*(1-p)/n/(Se+Sp-1)**2)
 }
 
@@ -190,24 +190,25 @@ tita = 0.25
 #sesgo, varianza, ecm
 
 sesgo_real = function(t_vals, Se=0.9, Sp=0.95){
-  return(abs((mean(t_vals-1+Sp)/(Se+Sp-1)) - tita))
+  return(((mean(t_vals)+Sp-1)/(Se+Sp-1)) - tita) 
 }
 
-varianza_real = function(t_vals, Se=0.9, Sp=0.95){
-  return(var((t_vals-1+Sp)/(Se+Sp-1)))
+varianza_real = function(t_vals,n ,Se=0.9, Sp=0.95){
+  return(var(t_vals)/(n*(Se+Sp-1)**2)) 
 }
+
 
 sesgo_teorico = 0
 
 varianza_teorica = function(n, Se=0.9, Sp=0.95, tita=0.25){
-  p = Se*tita+(1-Sp)*(1-tita)
+  p = calcular_p(Se,Sp,tita)
   return(p*(1-p)/n/(Se+Sp-1)**2)
 }
 
 datos = data.frame(n=c(), valor=c(), tipo=c())
 
 for (n in 1:500){
-  t_vals = rbinom(n, 1, tita)
+  t_vals = rbinom(n, 1, calcular_p(Se,Sp,tita)) 
   datos = rbind(datos,
                 list(
                   n=n,
@@ -221,7 +222,7 @@ for (n in 1:500){
                 ),
                 list(
                   n=n,
-                  valor=varianza_real(t_vals),
+                  valor=varianza_real(t_vals,n),
                   tipo='Varianza Real'
                 ),
                 list(
@@ -238,3 +239,25 @@ plot = ggplot(datos, aes(n, valor, color=tipo))+
   theme_minimal()
 
 ggplotly(plot)
+
+
+##########################################
+# 9. Construya intervalos de confianza bootstrap percentil de θ basado en θ_MoM. Para ello, realice simulaciones para
+#θ = 0.25, Se = 0.9 y Sp = 0.95 y distintos valores de n.
+
+
+tita = 0.25
+N = 500 # cantidad de simulaciones que vamos a hacer
+Se=0.9
+Sp= 0.95
+T_techo=0 #<- (?
+tita_mom=(T_techo+Sp-1)/(Se+Sp-1)
+
+
+
+
+
+
+
+
+
