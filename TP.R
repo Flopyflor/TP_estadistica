@@ -242,16 +242,100 @@ ggplotly(plot)
 
 
 ##########################################
-# 9. Construya intervalos de confianza bootstrap percentil de θ basado en θ_MoM. Para ello, realice simulaciones para
-#θ = 0.25, Se = 0.9 y Sp = 0.95 y distintos valores de n.
-
+#Para θ = 0.25, Se = 0.9 y Sp = 0.95, construya muestras bootstrap para observar la distribuci´on del estimador de
+#momentos de θ cuando n = 10. ¿Qué observa?
 
 tita = 0.25
-N = 500 # cantidad de simulaciones que vamos a hacer
+N_rep = 1000
 Se=0.9
 Sp= 0.95
-T_techo=0 #<- (?
-tita_mom=(T_techo+Sp-1)/(Se+Sp-1)
+set.seed(80)
+p=calcular_p(Se,Sp,tita)
+
+calcular_tita_mom= function(t_vals,Se=0.9,Sp=0.95){
+  n=length(t_vals)
+  return((mean(t_vals)+Sp-1)/(Se+Sp-1))
+}
+
+muestras_bootstrap=rep(NaN,N_rep)
+
+for (i in 1:N_rep){
+  t_vals= rbinom(10,1,p) #n=10
+  muestras_bootstrap[i]=calcular_tita_mom(t_vals)
+} 
+x=seq(min(muestras_bootstrap),max(muestras_bootstrap),length.out =500)
+hist(muestras_bootstrap,freq=FALSE,main="Histograma de muestras bootstrap hat_tita_MOM")
+lines(x,dnorm(x,mean(muestras_bootstrap),sd(muestras_bootstrap)),lwd=2)
+#Ajustamos una normal porque el promedio se distribuye como una normal 
+#y sumar y dividir por ctes solo modifica la forma de la normal
+
+
+#faltan observaciones entre 0.3 y 0.4 porque el n=10 es muy chico
+#El estimador solo puede tomar 11 valores distintos, debido a que mean(t_vals)
+#Solo toma 11 valores distintos
+tita_mom_values=rep(NaN,11)
+j=1
+for (i in 0:10){
+  tita_mom_values[j+i]=(i/10+Sp-1)/(Se+Sp-1)
+}
+
+tita_mom_values #como vemos ninguno entre 0.3 y 0,4
+
+#####################################
+#9. Construya intervalos de confianza bootstrap percentil de θ basado en hat_θ_MoM. Para ello, realice simulaciones para
+#θ = 0.25, Se = 0.9 y Sp = 0.95 y distintos valores de n.
+
+N_rep=500
+tita=0.25
+Se=0.9
+Sp=0.95
+
+#donde vamos a almacenar los intervalos
+inicios_percentil=c()
+finales_percentil=c()
+muestras_bootstrap=rep(NaN,N_rep)
+
+calcular_intervalo_bootstrap_percentil=function(n,Se=0.9,Sp=0.95,tita=0.25,N_rep=200){
+  muestras_bootstrap=rep(NaN,N_rep)
+  p=calcular_p(Se,Sp,tita)
+  for (i in 1:N_rep){
+    t_vals= rbinom(n,1,p)
+    muestras_bootstrap[i]=calcular_tita_mom(t_vals)
+  }
+  
+  return(list(
+    'inicio'= quantile(muestras_bootstrap,0.05),
+    'fin' = quantile(muestras_bootstrap,0.95)
+  ))
+}
+######################################
+#10. Construya intervalos de confianza de nivel asint´otico 0.95 para θ basado en ˆθMoM.
+
+calcular_intervalo_tita_mom=function(n,Se=0.9,Sp=0.95,tita=0.25,alfa=0.05){
+  z_alfa=qnorm(alfa/2,lower.tail=FALSE) #cuantil a derecha
+  
+  p=calcular_p(Se,Sp,tita)
+  
+  t_vals=rbinom(n,1,p)
+  
+  tita_mom= calcular_tita_mom(t_vals)
+  
+  desvio_standar= sqrt((p*(1-p))/(n*(Se+Sp-1)**2))
+  
+  return(list(
+    'inicio'= tita_mom-z_alfa*desvio_standar/sqrt(n),
+    'fin' = tita_mom+z_alfa*desvio_standar/sqrt(n)
+  ))
+}
+####################################
+#11. Con simulaciones, compare coberturas y longitudes promedio de los intevalos de confianza de los items anteriores.
+
+n_s = c(10, 50, 100, 200, 500) # cantidad de muestras que vamos a tomar
+
+datos = data.frame(n=c(), inicio=c(),final=c(), tipo=c())
+
+
+
 
 
 
