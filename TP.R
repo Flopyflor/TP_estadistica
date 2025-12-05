@@ -309,6 +309,8 @@ calcular_intervalo_bootstrap_percentil=function(n,Se=0.9,Sp=0.95,tita=0.25,N_rep
   ))
 }
 
+
+
 ######################################
 #10. Construya intervalos de confianza de nivel asint´otico 0.95 para θ basado en ˆθMoM.
 
@@ -347,9 +349,11 @@ for (n in n_s){
     fin = intervalo_percentil$fin
     cubre= inicio <= tita && tita <= fin
     
+    longitud = fin - inicio
+    
     coverturas = rbind(coverturas, 
-                       list('N'=i, 'n'=n,'inicio'=inicio, 
-                            'fin'=fin, 'cubre'=cubre,'tipo'='percentil'))
+                       list('N'=i, 'n'=n, 'inicio'=inicio, 
+                            'fin'=fin, 'cubre'=cubre, 'tipo'='percentil', 'longitud'=longitud))
     
     #Intervalo asintotico tita mom
     intervalo_tita_mom = calcular_intervalo_tita_mom(n)
@@ -357,9 +361,11 @@ for (n in n_s){
     fin = intervalo_tita_mom$fin
     cubre = inicio <= tita && tita <= fin
     
+    longitud = fin - inicio
+    
     coverturas = rbind(coverturas, 
-                       list('N'=i, 'n'=n,'inicio'=inicio, 
-                            'fin'=fin, 'cubre'=cubre,'tipo'='tita_mom'))
+                       list('N'=i, 'n'=n, 'inicio'=inicio, 
+                            'fin'=fin, 'cubre'=cubre, 'tipo'='tita_mom', 'longitud'=longitud))
   }
   }
 
@@ -367,16 +373,34 @@ for (n in n_s){
 for (n in n_s){
   
   porcentaje_covertura_percentil = sum(coverturas[coverturas$n == n & coverturas$tipo=='percentil', ]$cubre)/N_rep*100
-  print(paste0('El porcentaje de covertura con ', n, ' muestras en ', N_rep, ' para los intervalos bootrstrap percentil', 
+  print(paste0('El porcentaje de covertura con ', n, ' muestras en ', N_rep, 'repeticiones para los intervalos bootrstrap percentil', 
                ' simulaciones es de ', porcentaje_covertura_percentil, '%'))
   
   
   porcentaje_covertura_tita_mom = sum(coverturas[coverturas$n == n & coverturas$tipo=='tita_mom', ]$cubre)/N_rep*100
-  print(paste0('El porcentaje de covertura con ', n, ' muestras en ', N_rep,  ' para los intervalos basados en tita mom',
+  print(paste0('El porcentaje de covertura con ', n, ' muestras en ', N_rep,  'repeticiones para los intervalos basados en tita mom',
                ' simulaciones es de ', porcentaje_covertura_tita_mom, '%'))
+  
+  # Longitudes promedio
+  long_prom_boot =
+    mean(coverturas[coverturas$n == n & coverturas$tipo=='percentil', ]$longitud)
+  
+  long_prom_mom =
+    mean(coverturas[coverturas$n == n & coverturas$tipo=='tita_mom', ]$longitud)
+  
+  print(paste0(
+    'Longitud promedio bootstrap (n=', n, '): ', long_prom_boot
+  ))
+  
+  print(paste0(
+    'Longitud promedio MOM (n=', n, '): ', long_prom_mom
+  ))
+  
+  
   cat("\n")
   
 }
+
 View(coverturas)
 
 
