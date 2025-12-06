@@ -455,6 +455,87 @@ View(coverturas)
 
 
 
+####################################
+# 13: truncado
+
+
+# Función que simula una única muestra y devuelve el estimador truncado
+simular_una_muestra <- function(n, theta, Se, Sp) {
+  
+  # Generar estados verdaderos (enfermo/no enfermo)
+  verdaderos <- rbinom(n, 1, theta)
+  
+  # Generar resultado del test imperfecto
+  test <- ifelse(
+    verdaderos == 1,
+    rbinom(n, 1, Se),       # enfermo -> test positivo con Se
+    rbinom(n, 1, 1 - Sp)   # sano -> test falso positivo con (1 - Sp)
+  )
+  
+  # 3) Calcular el estimador de momentos
+  media_test <- mean(test)
+  theta_momentos <- (media_test - 1 + Sp) / (Se + Sp - 1)
+  
+  # 4) Truncar al intervalo [0, 1]
+  theta_truncado <- min(max(theta_momentos, 0), 1)
+  
+  return(theta_truncado)
+}
+
+
+# Función que repite la simulación muchas veces
+simular_estimador <- function(num_simulaciones, n, theta, Se, Sp) {
+  resultados <- replicate(
+    num_simulaciones,
+    simular_una_muestra(n, theta, Se, Sp)
+  )
+  return(resultados)
+}
+
+# Función que calcula métricas (media, sesgo, varianza, ECM)
+calcular_metricas <- function(resultados, theta_verdadero) {
+  media <- mean(resultados)
+  varianza <- var(resultados)
+  sesgo <- media - theta_verdadero
+  ecm <- sesgo^2 + varianza
+  
+  return(list(
+    media = media,
+    sesgo = sesgo,
+    varianza = varianza,
+    ecm = ecm
+  ))
+}
+
+# CORRER LAS SIMULACIONES
+
+theta_verdadero <- 0.3
+Se <- 0.9
+Sp <- 0.95
+num_simulaciones <- 10000
+
+
+# Simulaciones para distintos tamaños muestrales
+resultados_n10   <- simular_estimador(num_simulaciones, 10,   theta_verdadero, sensibilidad, especificidad)
+resultados_n100  <- simular_estimador(num_simulaciones, 100,  theta_verdadero, sensibilidad, especificidad)
+resultados_n1000 <- simular_estimador(num_simulaciones, 1000, theta_verdadero, sensibilidad, especificidad)
+
+# CALCULAR MÉTRICAS
+
+
+metricas_n10   <- calcular_metricas(resultados_n10, theta_verdadero)
+metricas_n100  <- calcular_metricas(resultados_n100, theta_verdadero)
+metricas_n1000 <- calcular_metricas(resultados_n1000, theta_verdadero)
+
+metricas_n10
+metricas_n100
+metricas_n1000
+
+# Gráfico
+
+hist(resultados_n1000, breaks = 30, probability = TRUE,
+     main = "Distribución del estimador truncado (n = 1000)",
+     xlab = "theta estimado")
 
 
 
