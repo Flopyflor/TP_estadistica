@@ -61,9 +61,8 @@ plot = ggplot(coverturas_graph, aes(y = N, x=inicio, xend=fin, color=cubre, fram
   geom_vline(xintercept=tita, linetype='dashed', color="black")+
   scale_color_manual(values = c("red", "blue"), labels = c("No cubre", "Cubre"))+
   labs(
-    title=expression("Intervalos de confianza para"~theta~
-                       ", \nde las primeras 100 simulaciones"),
-    x = expression("Valor de"~theta),
+    title="Intervalos de confianza para tita, \nde las primeras 100 simulaciones",
+    x = "Valor de tita",
     y = "Número de simulación",
     color="Cubre?"
   )+
@@ -126,13 +125,21 @@ plot = ggplot(valores_p, aes(x, p, color=variable))+
                      labels = c("Se", "Sp", "Tita"))+
   labs(
     title="p según las variables",
-    x = "valor de la variable",
+    x = "Valor de la variable",
     y = "p",
     color='Parámetro variable'
   )+
   theme_minimal()
 
-ggplotly(plot)
+plot = ggplotly(plot)
+
+plot <- style(
+  plot,
+  name = "Tita", # Set the name for the first trace (which is 'red')
+  traces = 3
+)
+
+plot
 
 
 
@@ -154,7 +161,7 @@ ECM_perf = function(tita, n){
 
 valores_ECM = data.frame(n=c(), valor=c(), ECM=c())
 
-for (n in 1:75){
+for (n in 1:300){
   valores_ECM = rbind(valores_ECM, 
                       list(
                         "n"=n,
@@ -253,7 +260,7 @@ ggplotly(plot)
 
 plot = ggplot(datos_var, aes(n, valor, color=Tipo))+
   geom_line(linewidth=1)+
-  scale_color_manual(values=c('tomato', 'darkolivegreen3'),
+  scale_color_manual(values=c('orchid', 'skyblue'),
                      labels=c('Real', 'Teórica'))+
   labs(
     title= 'Comparación de la Varianza Real con la Teórica',
