@@ -783,7 +783,7 @@ calcular_t_obs=function(muestra_post,muestra_prev,Se=0.9,Sp=0.95){
   return(sqrt(n)*abs(X_raya)/sqrt(var_X))
 }
 
-ns=c(10,20,50,70,100,200,500)
+ns=c(10,20,50,70,100,200,300,400,500,600,700,800,900,1000)
 Se=0.9
 Sp=0.95
 #tomamos theta post = theta prev ya que el nivel se ve bajo H0
