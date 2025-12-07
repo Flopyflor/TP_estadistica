@@ -1,8 +1,8 @@
 # Trabajo práctico de estadística
 # integrantes: 
-#    Franquito
-#    Emi
-#    yo :3
+#    Franco Vanotti
+#    Emiliano Torres
+#    Florencia Allami
 
 library(ggplot2)
 library(plotly)
@@ -154,7 +154,7 @@ ECM_perf = function(tita, n){
 
 valores_ECM = data.frame(n=c(), valor=c(), ECM=c())
 
-for (n in 1:300){
+for (n in 1:75){
   valores_ECM = rbind(valores_ECM, 
                       list(
                         "n"=n,
@@ -182,6 +182,7 @@ ggplot(valores_ECM, aes(n, valor, color=ECM))+
   )+
   theme_minimal()
 
+
 ################################################
 # 7. Realice simulaciones para comparar los valores teóricos hallados 
 # en el item 5 con los simulados.
@@ -206,7 +207,7 @@ varianza_teorica = function(n, Se=0.9, Sp=0.95, tita=0.25){
   return(p*(1-p)/n/(Se+Sp-1)**2)
 }
 
-datos = data.frame(n=c(), valor=c(), tipo=c())
+datos = data.frame(n=c(), valor=c(), Tipo=c())
 
 for (n in 1:500){
   t_vals = rbinom(n, 1, calcular_p(Se,Sp,tita)) 
@@ -214,31 +215,31 @@ for (n in 1:500){
                 list(
                   n=n,
                   valor=sesgo_real(t_vals),
-                  tipo='Sesgo Real'
+                  Tipo='Sesgo Real'
                 ),
                 list(
                   n=n,
                   valor=sesgo_teorico,
-                  tipo='Sesgo Teórico'
+                  Tipo='Sesgo Teórico'
                 ),
                 list(
                   n=n,
                   valor=varianza_real(t_vals,n),
-                  tipo='Varianza Real'
+                  Tipo='Varianza Real'
                 ),
                 list(
                   n=n,
                   valor=varianza_teorica(n),
-                  tipo='Varianza Teórica'
+                  Tipo='Varianza Teórica'
                 ))
 }
 
-datos$tipo = as.factor(datos$tipo)
+datos$tipo = as.factor(datos$Tipo)
 
-datos_sesgo = datos[datos$tipo == 'Sesgo Real' | datos$tipo == 'Sesgo Teórico', ]
-datos_var = datos[datos$tipo == 'Varianza Real' | datos$tipo == 'Varianza Teórica', ]
+datos_sesgo = datos[datos$Tipo == 'Sesgo Real' | datos$Tipo == 'Sesgo Teórico', ]
+datos_var = datos[datos$Tipo == 'Varianza Real' | datos$Tipo == 'Varianza Teórica', ]
 
-plot = ggplot(datos_sesgo, aes(n, valor, color=tipo))+
+plot = ggplot(datos_sesgo, aes(n, valor, color=Tipo))+
   geom_line(linewidth=1)+
   scale_color_manual(values=c('tomato', 'darkolivegreen3'),
                      labels=c('Real', 'Teórica'))+
@@ -250,7 +251,7 @@ plot = ggplot(datos_sesgo, aes(n, valor, color=tipo))+
 
 ggplotly(plot)
 
-plot = ggplot(datos_var, aes(n, valor, color=tipo))+
+plot = ggplot(datos_var, aes(n, valor, color=Tipo))+
   geom_line(linewidth=1)+
   scale_color_manual(values=c('tomato', 'darkolivegreen3'),
                      labels=c('Real', 'Teórica'))+
@@ -579,65 +580,65 @@ calcular_metricas <- function(resultados, theta_verdadero) {
 theta_verdadero <- 0.25
 Se <- 0.9
 Sp <- 0.95
-num_simulaciones <- 10000
+num_simulaciones <- 100
+num_muestras <- 100
 
+metricas = data.frame(media=c(), sesgo=c(), varianza=c(), ecm=c(), n=c(), N=c())
 
-# Simulaciones para distintos tamaños muestrales
-resultados_n10   <- simular_estimador(num_simulaciones, 10,   theta_verdadero, Se, Sp)
-resultados_n100  <- simular_estimador(num_simulaciones, 100,  theta_verdadero, Se, Sp)
-resultados_n1000 <- simular_estimador(num_simulaciones, 1000, theta_verdadero, Se, Sp)
-
-# CALCULAR MÉTRICAS
-
-
-metricas_n10   <- calcular_metricas(resultados_n10, theta_verdadero)
-metricas_n100  <- calcular_metricas(resultados_n100, theta_verdadero)
-metricas_n1000 <- calcular_metricas(resultados_n1000, theta_verdadero)
-
-metricas_n10
-metricas_n100
-metricas_n1000
-
-metricas_n10 = as.data.frame(metricas_n10)
-metricas_n10 = cbind(metricas_n10, n=10)
-
-metricas_n100 = as.data.frame(metricas_n100)
-metricas_n100 = cbind(metricas_n100, n=100)
-
-metricas_n1000 = as.data.frame(metricas_n1000)
-metricas_n1000 = cbind(metricas_n1000, n=1000)
-
-metricas = rbind(metricas_n10, metricas_n100, metricas_n1000)
+for (n in c(10, 100, 1000)){
+  for (i in 1:num_simulaciones){
+    resultados = simular_estimador(num_muestras, n, theta_verdadero, Se, Sp)
+    metricas_simulacion = calcular_metricas(resultados, theta_verdadero)
+    metricas = rbind(metricas, list(
+      media=metricas_simulacion$media,
+      sesgo=metricas_simulacion$sesgo,
+      varianza=metricas_simulacion$varianza,
+      ecm=metricas_simulacion$ecm,
+      n=n, N=i
+      ))
+    
+  }
+}
 
 # Gráfico
 
-ggplot(metricas, aes(n, sesgo))+
-  geom_line(linewidth=1)+
+plot = ggplot(metricas, aes(x=N, y=media, frame=n))+
+  geom_point(color='skyblue')+
+  geom_hline(yintercept=theta_verdadero, linetype='dashed', color='black')+
   labs(
-    title='Sesgo en función de n',
-    y="Sesgo"
+    title='Sesgo del calculo de tita en distintas simulaciones',
+    x='Simulación',
+    y='Media de tita'
   )+
   theme_minimal()
 
-ggplot(metricas, aes(n, varianza))+
-  geom_line(linewidth=1)+
+ggplotly(plot)
+
+plot = ggplot(metricas, aes(x=N, y=varianza, frame=n))+
+  geom_point(color='tomato')+
+  geom_hline(yintercept=0, linetype='dashed', color='black')+
   labs(
-    title='Varianza en función de n',
-    y="Varianza"
+    title='Varianza del calculo de tita en distintas simulaciones',
+    x='Simulación',
+    y='Varianza de tita'
   )+
   theme_minimal()
 
-ggplot(metricas, aes(n, ecm))+
-  geom_line(linewidth=1)+
+ggplotly(plot)
+
+plot = ggplot(metricas, aes(x=N, y=ecm, frame=n))+
+  geom_point(color='darkolivegreen2')+
+  geom_hline(yintercept=0, linetype='dashed', color='black')+
   labs(
-    title='ECM en función de n',
+    title='ECM del calculo de tita en distintas simulaciones',
+    x='Simulación',
     y='ECM'
   )+
   theme_minimal()
 
-hist(resultados_n1000, breaks = 30, probability = TRUE,
-     main = "Distribución del estimador truncado (n = 1000)",
-     xlab = "theta estimado")
+ggplotly(plot)
+
+# Notese la diferencia de escala entre el gráfico del sesgo y el de la varianza
 
 
 
