@@ -490,7 +490,7 @@ coberturas_graph_percentil =
   coberturas[coberturas$N <= 100 & coberturas$longitud > 0 & coberturas$tipo == 'percentil', ]
 
 coberturas_graph_asintotico = 
-  Coberturas[coberturas$N <= 100 & coberturas$longitud > 0 & coberturas$tipo == 'asintotico', ]
+  coberturas[coberturas$N <= 100 & coberturas$longitud > 0 & coberturas$tipo == 'asintotico', ]
 
 # grafico percentil
 plot = ggplot(coberturas_graph_percentil, aes(x= inicio, xend=fin, y= N, color=cubre, frame=n))+
