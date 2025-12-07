@@ -31,7 +31,7 @@ calculo_intervalo = function(tita_hat, n){
   ))
 }
 
-coverturas <- data.frame(N=c(), n=c(), titahat=c(), inicio=c(), fin=c(), cubre=c())
+Coberturas <- data.frame(N=c(), n=c(), titahat=c(), inicio=c(), fin=c(), cubre=c())
 
 # hacemos las simulaciones
 for (n in n_s){ 
@@ -45,7 +45,7 @@ for (n in n_s){
     cubre = inicio <= tita && tita <= fin
     
     # guardamos los datos
-    coverturas = rbind(coverturas, 
+    Coberturas = rbind(Coberturas, 
                        list('N'=i, 'n'=n, 'titahat'=tita_hat, 'inicio'=inicio, 
                             'fin'=fin, 'cubre'=cubre))
     
@@ -54,9 +54,9 @@ for (n in n_s){
 
 # graficamos
 
-coverturas_graph = coverturas[coverturas$N <= 100, ]
+Coberturas_graph = Coberturas[Coberturas$N <= 100, ]
 
-plot = ggplot(coverturas_graph, aes(y = N, x=inicio, xend=fin, color=cubre, frame=n))+
+plot = ggplot(Coberturas_graph, aes(y = N, x=inicio, xend=fin, color=cubre, frame=n))+
   geom_segment(aes(yend=N), linewidth=1)+
   geom_vline(xintercept=tita, linetype='dashed', color="black")+
   scale_color_manual(values = c("red", "blue"), labels = c("No cubre", "Cubre"))+
@@ -72,11 +72,11 @@ plot = ggplot(coverturas_graph, aes(y = N, x=inicio, xend=fin, color=cubre, fram
 
 ggplotly(plot)
 
-# imprimimos por consola el porcentaje de covertura
+# imprimimos por consola el porcentaje de Cobertura
 for (n in n_s){
-  porcentaje_covertura = sum(coverturas[coverturas$n == n, ]$cubre)/N*100
-  print(paste0('El porcentaje de covertura con ', n, ' muestras en ', N, 
-               ' simulaciones es de ', porcentaje_covertura, '%'))
+  porcentaje_Cobertura = sum(Coberturas[Coberturas$n == n, ]$cubre)/N*100
+  print(paste0('El porcentaje de Cobertura con ', n, ' muestras en ', N, 
+               ' simulaciones es de ', porcentaje_Cobertura, '%'))
 }
 
 
@@ -396,7 +396,7 @@ p =  calcular_p(Se, Sp, tita)
 n_s = c(10, 50, 100, 200, 500) # cantidad de muestras que vamos a tomar
 
 #acumulador
-coverturas = data.frame(N=c(),n=c(), inicio=c(),final=c(),
+Coberturas = data.frame(N=c(),n=c(), inicio=c(),final=c(),
                         cubre=c(), tipo=c(), longitud=c(), tita_generador=c())
 
 for (n in n_s){
@@ -414,7 +414,7 @@ for (n in n_s){
     
     longitud = fin - inicio
     
-    coverturas = rbind(coverturas, 
+    Coberturas = rbind(Coberturas, 
                        list('N'=i, 'n'=n, 'inicio'=inicio, 
                             'fin'=fin, 'cubre'=cubre, 'tipo'='percentil', 
                             'longitud'=longitud, tita_generador=tita_hat))
@@ -427,41 +427,41 @@ for (n in n_s){
     
     longitud = fin - inicio
     
-    coverturas = rbind(coverturas, 
+    Coberturas = rbind(Coberturas, 
                        list('N'=i, 'n'=n, 'inicio'=inicio, 
                             'fin'=fin, 'cubre'=cubre, 'tipo'='asintotico', 
                             'longitud'=longitud, tita_generador=tita_hat))
   }
 }
 
-coverturas$tipo = as.factor(coverturas$tipo)
+Coberturas$tipo = as.factor(Coberturas$tipo)
 
 
 for (n in n_s){
   
-  porcentaje_covertura_percentil = 
-    sum(coverturas[coverturas$n == n & coverturas$tipo=='percentil', ]$cubre)/
+  porcentaje_Cobertura_percentil = 
+    sum(Coberturas[Coberturas$n == n & Coberturas$tipo=='percentil', ]$cubre)/
     N_rep*100
   
-  print(paste0('El porcentaje de covertura con ', n, ' muestras en ', N_rep,
+  print(paste0('El porcentaje de Cobertura con ', n, ' muestras en ', N_rep,
                ' repeticiones para los intervalos bootrstrap percentil es de ',
-               porcentaje_covertura_percentil, '%'))
+               porcentaje_Cobertura_percentil, '%'))
   
   
-  porcentaje_covertura_asintotico = 
-    sum(coverturas[coverturas$n == n & coverturas$tipo=='asintotico', ]$cubre)/
+  porcentaje_Cobertura_asintotico = 
+    sum(Coberturas[Coberturas$n == n & Coberturas$tipo=='asintotico', ]$cubre)/
     N_rep*100
   
-  print(paste0('El porcentaje de covertura con ', n, ' muestras en ', N_rep,  
+  print(paste0('El porcentaje de Cobertura con ', n, ' muestras en ', N_rep,  
                ' repeticiones para los intervalos asintóticos basados en tita mom es de ',
-               porcentaje_covertura_asintotico, '%'))
+               porcentaje_Cobertura_asintotico, '%'))
   
   # Longitudes promedio
   long_prom_percentil =
-    mean(coverturas[coverturas$n == n & coverturas$tipo=='percentil', ]$longitud)
+    mean(Coberturas[Coberturas$n == n & Coberturas$tipo=='percentil', ]$longitud)
   
   long_prom_asintotico =
-    mean(coverturas[coverturas$n == n & coverturas$tipo=='asintotico', ]$longitud)
+    mean(Coberturas[Coberturas$n == n & Coberturas$tipo=='asintotico', ]$longitud)
   
   print(paste0(
     'Longitud promedio bootstrap (n=', n, '): ', long_prom_percentil
@@ -476,24 +476,24 @@ for (n in n_s){
   
 }
 
-View(coverturas)
+View(Coberturas)
 
 
 
 ## vamos a filtrar los casos de longitud 0 y solo mostrar algunos casos
 
-coverturas_graph_percentil = 
-  coverturas[coverturas$N <= 100 & coverturas$longitud > 0 & coverturas$tipo == 'percentil', ]
+Coberturas_graph_percentil = 
+  Coberturas[Coberturas$N <= 100 & Coberturas$longitud > 0 & Coberturas$tipo == 'percentil', ]
 
-coverturas_graph_asintotico = 
-  coverturas[coverturas$N <= 100 & coverturas$longitud > 0 & coverturas$tipo == 'asintotico', ]
+Coberturas_graph_asintotico = 
+  Coberturas[Coberturas$N <= 100 & Coberturas$longitud > 0 & Coberturas$tipo == 'asintotico', ]
 
 # grafico percentil
-plot = ggplot(coverturas_graph_percentil, aes(x= inicio, xend=fin, y= N, color=cubre, frame=n))+
+plot = ggplot(Coberturas_graph_percentil, aes(x= inicio, xend=fin, y= N, color=cubre, frame=n))+
   geom_segment(aes(yend=N))+
   geom_vline(xintercept=tita, linetype='dashed', color="black")+
   labs(
-    title='Covertura del intervalo Bootstrap Percentil',
+    title='Cobertura del intervalo Bootstrap Percentil',
     x='Intervalo',
     y='Simulación',
     color='Cubre?'
@@ -503,12 +503,12 @@ plot = ggplot(coverturas_graph_percentil, aes(x= inicio, xend=fin, y= N, color=c
 ggplotly(plot)
 
 #grafico asintotico
-plot = ggplot(coverturas_graph_asintotico,
+plot = ggplot(Coberturas_graph_asintotico,
               aes(x= inicio, xend=fin, y= N, color=cubre, frame=n))+
   geom_segment(aes(yend=N))+
   geom_vline(xintercept=tita, linetype='dashed', color="black")+
   labs(
-    title='Covertura del intervalo Bootstrap asintótico',
+    title='Cobertura del intervalo Bootstrap asintótico',
     x='Intervalo',
     y='Simulación',
     color='Cubre?'
@@ -711,7 +711,7 @@ invtervalo_asintotico_test=
   }
 
 #Miremos su cobertura
-coverturas <- data.frame(N=c(), n=c(), titahat=c(), inicio=c(), fin=c(), cubre=c())
+Coberturas <- data.frame(N=c(), n=c(), titahat=c(), inicio=c(), fin=c(), cubre=c())
 valor_real=theta_post-theta_prev
 
 
@@ -726,7 +726,7 @@ for (n in ns){
     cubre = inicio <= valor_real && valor_real <= fin
     
     # guardamos los datos
-    coverturas = rbind(coverturas, 
+    Coberturas = rbind(Coberturas, 
                        list('N'=i, 'n'=n, 'titahat'=tita_hat, 'inicio'=inicio, 
                             'fin'=fin, 'cubre'=cubre))
     
@@ -735,9 +735,9 @@ for (n in ns){
 
 # graficamos
 
-coverturas_graph = coverturas[coverturas$N <= 100, ]
+Coberturas_graph = Coberturas[Coberturas$N <= 100, ]
 
-plot = ggplot(coverturas_graph, aes(y = N, x=inicio, xend=fin, color=cubre, frame=n))+
+plot = ggplot(Coberturas_graph, aes(y = N, x=inicio, xend=fin, color=cubre, frame=n))+
   geom_segment(aes(yend=N), linewidth=1)+
   geom_vline(xintercept=valor_real, linetype='dashed', color="black")+
   scale_color_manual(values = c("red", "blue"), labels = c("No cubre", "Cubre"))+
@@ -754,9 +754,9 @@ plot = ggplot(coverturas_graph, aes(y = N, x=inicio, xend=fin, color=cubre, fram
 ggplotly(plot)
 
 for (n in ns){
-  porcentaje_covertura = sum(coverturas[coverturas$n == n, ]$cubre)/N*100
-  print(paste0('El porcentaje de covertura con ', n, ' muestras en ', N_rep, 
-               ' simulaciones es de ', porcentaje_covertura, '%'))
+  porcentaje_Cobertura = sum(Coberturas[Coberturas$n == n, ]$cubre)/N*100
+  print(paste0('El porcentaje de Cobertura con ', n, ' muestras en ', N_rep, 
+               ' simulaciones es de ', porcentaje_Cobertura, '%'))
 }
 ################################
 #4.Fijado el tamaño de muestras npre y npost, calcule el nivel empírico del test, es decir, 
