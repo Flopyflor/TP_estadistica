@@ -123,7 +123,7 @@ valores_p$variable = as.factor(valores_p$variable)
 plot = ggplot(valores_p, aes(x, p, color=variable))+
   geom_line(linewidth=1)+
   scale_color_manual(values = c("#00CD66", "tomato", 'skyblue2'), 
-                     labels = c("Se", "Sp", 'Tita'))+
+                     labels = c("Se", "Sp", "Tita"))+
   labs(
     title="p según las variables",
     x = "valor de la variable",
@@ -229,14 +229,35 @@ for (n in 1:500){
                 list(
                   n=n,
                   valor=varianza_teorica(n),
-                  tipo='Varianza Teorica'
+                  tipo='Varianza Teórica'
                 ))
 }
 
 datos$tipo = as.factor(datos$tipo)
 
-plot = ggplot(datos, aes(n, valor, color=tipo))+
+datos_sesgo = datos[datos$tipo == 'Sesgo Real' | datos$tipo == 'Sesgo Teórico', ]
+datos_var = datos[datos$tipo == 'Varianza Real' | datos$tipo == 'Varianza Teórica', ]
+
+plot = ggplot(datos_sesgo, aes(n, valor, color=tipo))+
   geom_line(linewidth=1)+
+  scale_color_manual(values=c('tomato', 'darkolivegreen3'),
+                     labels=c('Real', 'Teórica'))+
+  labs(
+    title= 'Comparación del Sesgo Real con el Teórico',
+    color = 'Sesgo'
+  )+
+  theme_minimal()
+
+ggplotly(plot)
+
+plot = ggplot(datos_var, aes(n, valor, color=tipo))+
+  geom_line(linewidth=1)+
+  scale_color_manual(values=c('tomato', 'darkolivegreen3'),
+                     labels=c('Real', 'Teórica'))+
+  labs(
+    title= 'Comparación de la Varianza Real con la Teórica',
+    color = 'Varianza'
+  )+
   theme_minimal()
 
 ggplotly(plot)
@@ -302,18 +323,6 @@ ggplot(muestras_bootstrap, aes(x = muestras_bootstrap))+
 #los límitesd de la normal están dados por default por el máximo y mínimo
 #de los resultados
 
-
-#faltan observaciones entre 0.3 y 0.4 porque el n=10 es muy chico
-#El estimador solo puede tomar 11 valores distintos, debido a que mean(t_vals)
-#Solo toma 11 valores distintos
-tita_mom_values=rep(NaN,11)
-j=1
-for (i in 0:10){
-  tita_mom_values[j+i]=(i/10+Sp-1)/(Se+Sp-1)
-}
-
-tita_mom_values #como vemos, ninguno entre 0.3 y 0,4
-
 ################################################
 #                 Parte 2.2
 ################################################
@@ -364,12 +373,12 @@ calcular_intervalo_asintotico=
     sd_bootstrap = 
       sqrt(mean((muestras_bootstrap-mean(muestras_bootstrap))**2))
     
-    
     return(list(
       'inicio'= tita_hat-z_alfa*sd_bootstrap/sqrt(n),
       'fin' = tita_hat+z_alfa*sd_bootstrap/sqrt(n)
     ))
-}
+  }
+
 
 ####################################
 #11. Con simulaciones, compare coberturas y longitudes promedio de los 
@@ -379,7 +388,7 @@ calcular_intervalo_asintotico=
 tita=0.25
 Se=0.9
 Sp=0.95
-N_rep = 500 # si lo aumentás mucho más empieza a tardar en correr
+N_rep = 1000 # si lo aumentás mucho más empieza a tardar en correr
 
 p =  calcular_p(Se, Sp, tita)
 
@@ -466,11 +475,31 @@ for (n in n_s){
   
 }
 
+#list('N'=i, 'n'=n, 'inicio'=inicio, 
+#'fin'=fin, 'cubre'=cubre, 'tipo'='percentil', 
+#longitud'=longitud))
+
+coverturas_graph_percentil = 
+  coverturas[coverturas$N <= 50 & coverturas$tipo == 'percentil', ]
+
+coverturas_graph_asintotico = 
+  coverturas[coverturas$N <= 50 & coverturas$tipo == 'asintotico', ]
+
+plot = ggplot()+
+  geom_segment(data=coverturas_graph_percentil, 
+               aes(x= inicio, xend=fin, y= N, yend=N, color=cubre))+
+  geom_segment(data=coverturas_graph_asintotico,
+               aes(x= inicio, xend=fin, y= N+50, yend=N+50, color=cubre))+
+  theme_minimal()
+
+ggplotly(plot)
 
 
 View(coverturas)
 
-
+################################################
+##                Parte 2.3
+################################################
 
 ####################################
 # 13: truncado
