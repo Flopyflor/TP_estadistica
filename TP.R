@@ -592,8 +592,9 @@ calcular_metricas <- function(resultados, theta_verdadero) {
 theta_verdadero <- 0.25
 Se <- 0.9
 Sp <- 0.95
-num_simulaciones <- 100 # si cambiamos estos números hay que cambiarlo tmb en el latex
+num_simulaciones <- 500 # si cambiamos estos números hay que cambiarlo tmb en el latex
 num_muestras <- 100
+p <- calcular_p(Se, Sp, theta_verdadero)
 
 metricas = data.frame(media=c(), sesgo=c(), varianza=c(), ecm=c(), n=c(), N=c())
 
@@ -601,6 +602,7 @@ for (n in c(10, 100, 1000)){
   for (i in 1:num_simulaciones){
     resultados = simular_estimador(num_muestras, n, theta_verdadero, Se, Sp)
     metricas_simulacion = calcular_metricas(resultados, theta_verdadero)
+    
     metricas = rbind(metricas, list(
       media=metricas_simulacion$media,
       sesgo=metricas_simulacion$sesgo,
@@ -652,6 +654,61 @@ ggplotly(plot)
 
 # Notese la diferencia de escala entre el gráfico del sesgo y el de la varianza
 
+## calculando la distribución asintótica
+N = 1000
+n = 1000
+
+tita_hats = simular_estimador(N, n, theta_verdadero, Se, Sp)
+
+tita_hats = data.frame(tita_hat = tita_hats)
+
+sd_tita_hat = sd(tita_hats$tita_hat*sqrt(N))
+
+ggplot(tita_hats, aes(x=((tita_hat-theta_verdadero)*sqrt(N))))+
+  geom_histogram(aes(y=after_stat(density)), bins = 16,
+                     fill='pink', color='black')+
+  stat_function(
+  fun = dnorm,
+  args = list(mean = mean(tita_hat)-theta_verdadero, sd_tita_hat),
+  color = "royalblue",
+  linewidth = 1,
+  linetype = "dashed"
+)+
+  labs(
+    title = "Distribución tita hats",
+    x = "Valor del estimador Bootstrap",
+    y = "Densidad"
+  )+
+  theme_minimal()
+
+
+##Pruebas
+
+sd_tita_hat = sd(tita_hats$tita_hat)
+
+ggplot(tita_hats, aes(x=(tita_hat)))+
+  geom_histogram(aes(y=after_stat(density)), bins = 16,
+                 fill='pink', color='black')+
+  stat_function(
+    fun = dnorm,
+    args = list(mean = 0, sd_tita_hat),
+    color = "royalblue",
+    linewidth = 1,
+    linetype = "dashed"
+  )+
+  labs(
+    title = "Tita hats",
+    x = "Valor del estimador Bootstrap",
+    y = "Densidad"
+  )+
+  theme_minimal()
+
+
+muestra= rexp(10000,rate=2)
+hist(muestra)
+muestra_estandar=(muestra-1/2)/sd(muestra)
+hist(muestra_estandar)
+
 ################################################
 ##                Parte 3.1
 ################################################
@@ -659,7 +716,7 @@ ggplotly(plot)
 ## 2. Aplique a un caso ficticio con npre = npost = 100, Se = 0.9, Sp = 0.95, θpre = 0.2 
 #y θpost = 0.15 y α = 0.05. ¿Qué ocurre si achicamos los tamaños de muestra?
 
-calcular_t_obs=function(muestra_post,muestra_prev,Se=0.9,Sp=0.95){
+calcular_t_obs = function(muestra_post, muestra_prev, Se=0.9, Sp=0.95){
   n=length(muestra_post)
   X_raya=mean(muestra_post-muestra_prev)/(Se+Sp-1)
   #le sumamos un epsilon para prevenir divisiones por 0
