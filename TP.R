@@ -658,56 +658,45 @@ ggplotly(plot)
 N = 1000
 n = 1000
 
+#muestra
 tita_hats = simular_estimador(N, n, theta_verdadero, Se, Sp)
-
 tita_hats = data.frame(tita_hat = tita_hats)
 
-sd_tita_hat = sd(tita_hats$tita_hat*sqrt(N))
+# vemos que es normal
+ggplot(tita_hats, aes(sample = tita_hat)) +
+  stat_qq() +
+  stat_qq_line(color = "red")+
+  theme_minimal()+
+  labs(
+    title="QQ-Norm de los estimadores de tita",
+    x='Cuantiles Teóricos',
+    y='Cuantiles Reales'
+  )
 
-ggplot(tita_hats, aes(x=((tita_hat-theta_verdadero)*sqrt(N))))+
+
+
+#luego, vemos la distribución y superponemos una normal
+sd_tita_hat = sd(tita_hats$tita_hat*sqrt(N))
+mean_tita_hat = mean((tita_hats$tita_hat-theta_verdadero)*sqrt(N))
+
+ggplot(tita_hats, aes(x=(tita_hat-theta_verdadero)*sqrt(N)))+
   geom_histogram(aes(y=after_stat(density)), bins = 16,
                      fill='pink', color='black')+
   stat_function(
   fun = dnorm,
-  args = list(mean = mean(tita_hat)-theta_verdadero, sd_tita_hat),
+  args = list(mean = mean_tita_hat, sd_tita_hat),
   color = "royalblue",
   linewidth = 1,
   linetype = "dashed"
 )+
   labs(
-    title = "Distribución tita hats",
+    title = "Distribución del estimador truncado",
     x = "Valor del estimador Bootstrap",
     y = "Densidad"
   )+
   theme_minimal()
 
 
-##Pruebas
-
-sd_tita_hat = sd(tita_hats$tita_hat)
-
-ggplot(tita_hats, aes(x=(tita_hat)))+
-  geom_histogram(aes(y=after_stat(density)), bins = 16,
-                 fill='pink', color='black')+
-  stat_function(
-    fun = dnorm,
-    args = list(mean = 0, sd_tita_hat),
-    color = "royalblue",
-    linewidth = 1,
-    linetype = "dashed"
-  )+
-  labs(
-    title = "Tita hats",
-    x = "Valor del estimador Bootstrap",
-    y = "Densidad"
-  )+
-  theme_minimal()
-
-
-muestra= rexp(10000,rate=2)
-hist(muestra)
-muestra_estandar=(muestra-1/2)/sd(muestra)
-hist(muestra_estandar)
 
 ################################################
 ##                Parte 3.1
