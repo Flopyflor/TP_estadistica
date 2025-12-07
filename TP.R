@@ -587,7 +587,7 @@ calcular_metricas <- function(resultados, theta_verdadero) {
 theta_verdadero <- 0.25
 Se <- 0.9
 Sp <- 0.95
-num_simulaciones <- 100
+num_simulaciones <- 100 # si cambiamos estos números hay que cambiarlo tmb en el latex
 num_muestras <- 100
 
 metricas = data.frame(media=c(), sesgo=c(), varianza=c(), ecm=c(), n=c(), N=c())
