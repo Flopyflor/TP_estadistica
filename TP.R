@@ -374,8 +374,8 @@ calcular_intervalo_asintotico=
       sqrt(mean((muestras_bootstrap-mean(muestras_bootstrap))**2))
     
     return(list(
-      'inicio'= tita_hat-z_alfa*sd_bootstrap/sqrt(n),
-      'fin' = tita_hat+z_alfa*sd_bootstrap/sqrt(n)
+      'inicio'= tita_hat-z_alfa*sd_bootstrap,
+      'fin' = tita_hat+z_alfa*sd_bootstrap
     ))
   }
 
@@ -388,7 +388,7 @@ calcular_intervalo_asintotico=
 tita=0.25
 Se=0.9
 Sp=0.95
-N_rep = 1000 # si lo aumentás mucho más empieza a tardar en correr
+N_rep = 500 # si lo aumentás mucho más empieza a tardar en correr
 
 p =  calcular_p(Se, Sp, tita)
 
@@ -396,7 +396,7 @@ n_s = c(10, 50, 100, 200, 500) # cantidad de muestras que vamos a tomar
 
 #acumulador
 coverturas = data.frame(N=c(),n=c(), inicio=c(),final=c(),
-                        cubre=c(), tipo=c(), longitud=c())
+                        cubre=c(), tipo=c(), longitud=c(), tita_generador=c())
 
 for (n in n_s){
   for (i in 1:N_rep){
@@ -416,7 +416,7 @@ for (n in n_s){
     coverturas = rbind(coverturas, 
                        list('N'=i, 'n'=n, 'inicio'=inicio, 
                             'fin'=fin, 'cubre'=cubre, 'tipo'='percentil', 
-                            'longitud'=longitud))
+                            'longitud'=longitud, tita_generador=tita_hat))
     
     #Intervalo asintotico tita mom
     intervalo_asintotico = calcular_intervalo_asintotico(tita_hat, n)
@@ -429,7 +429,7 @@ for (n in n_s){
     coverturas = rbind(coverturas, 
                        list('N'=i, 'n'=n, 'inicio'=inicio, 
                             'fin'=fin, 'cubre'=cubre, 'tipo'='asintotico', 
-                            'longitud'=longitud))
+                            'longitud'=longitud, tita_generador=tita_hat))
   }
 }
 
@@ -475,27 +475,48 @@ for (n in n_s){
   
 }
 
-#list('N'=i, 'n'=n, 'inicio'=inicio, 
-#'fin'=fin, 'cubre'=cubre, 'tipo'='percentil', 
-#longitud'=longitud))
+View(coverturas)
+
+
+
+## vamos a filtrar los casos de longitud 0 y solo mostrar algunos casos
 
 coverturas_graph_percentil = 
-  coverturas[coverturas$N <= 50 & coverturas$tipo == 'percentil', ]
+  coverturas[coverturas$N <= 100 & coverturas$longitud > 0 & coverturas$tipo == 'percentil', ]
 
 coverturas_graph_asintotico = 
-  coverturas[coverturas$N <= 50 & coverturas$tipo == 'asintotico', ]
+  coverturas[coverturas$N <= 100 & coverturas$longitud > 0 & coverturas$tipo == 'asintotico', ]
 
-plot = ggplot()+
-  geom_segment(data=coverturas_graph_percentil, 
-               aes(x= inicio, xend=fin, y= N, yend=N, color=cubre))+
-  geom_segment(data=coverturas_graph_asintotico,
-               aes(x= inicio, xend=fin, y= N+50, yend=N+50, color=cubre))+
+# grafico percentil
+plot = ggplot(coverturas_graph_percentil, aes(x= inicio, xend=fin, y= N, color=cubre, frame=n))+
+  geom_segment(aes(yend=N))+
+  geom_vline(xintercept=tita, linetype='dashed', color="black")+
+  labs(
+    title='Covertura del intervalo Bootstrap Percentil',
+    x='Intervalo',
+    y='Simulación',
+    color='Cubre?'
+  )+
+  theme_minimal()
+
+ggplotly(plot)
+
+#grafico asintotico
+plot = ggplot(coverturas_graph_asintotico,
+              aes(x= inicio, xend=fin, y= N, color=cubre, frame=n))+
+  geom_segment(aes(yend=N))+
+  geom_vline(xintercept=tita, linetype='dashed', color="black")+
+  labs(
+    title='Covertura del intervalo Bootstrap asintótico',
+    x='Intervalo',
+    y='Simulación',
+    color='Cubre?'
+  )+
   theme_minimal()
 
 ggplotly(plot)
 
 
-View(coverturas)
 
 ################################################
 ##                Parte 2.3
@@ -555,16 +576,16 @@ calcular_metricas <- function(resultados, theta_verdadero) {
 
 # CORRER LAS SIMULACIONES
 
-theta_verdadero <- 0.3
+theta_verdadero <- 0.25
 Se <- 0.9
 Sp <- 0.95
 num_simulaciones <- 10000
 
 
 # Simulaciones para distintos tamaños muestrales
-resultados_n10   <- simular_estimador(num_simulaciones, 10,   theta_verdadero, sensibilidad, especificidad)
-resultados_n100  <- simular_estimador(num_simulaciones, 100,  theta_verdadero, sensibilidad, especificidad)
-resultados_n1000 <- simular_estimador(num_simulaciones, 1000, theta_verdadero, sensibilidad, especificidad)
+resultados_n10   <- simular_estimador(num_simulaciones, 10,   theta_verdadero, Se, Sp)
+resultados_n100  <- simular_estimador(num_simulaciones, 100,  theta_verdadero, Se, Sp)
+resultados_n1000 <- simular_estimador(num_simulaciones, 1000, theta_verdadero, Se, Sp)
 
 # CALCULAR MÉTRICAS
 
@@ -577,7 +598,42 @@ metricas_n10
 metricas_n100
 metricas_n1000
 
+metricas_n10 = as.data.frame(metricas_n10)
+metricas_n10 = cbind(metricas_n10, n=10)
+
+metricas_n100 = as.data.frame(metricas_n100)
+metricas_n100 = cbind(metricas_n100, n=100)
+
+metricas_n1000 = as.data.frame(metricas_n1000)
+metricas_n1000 = cbind(metricas_n1000, n=1000)
+
+metricas = rbind(metricas_n10, metricas_n100, metricas_n1000)
+
 # Gráfico
+
+ggplot(metricas, aes(n, sesgo))+
+  geom_line(linewidth=1)+
+  labs(
+    title='Sesgo en función de n',
+    y="Sesgo"
+  )+
+  theme_minimal()
+
+ggplot(metricas, aes(n, varianza))+
+  geom_line(linewidth=1)+
+  labs(
+    title='Varianza en función de n',
+    y="Varianza"
+  )+
+  theme_minimal()
+
+ggplot(metricas, aes(n, ecm))+
+  geom_line(linewidth=1)+
+  labs(
+    title='ECM en función de n',
+    y='ECM'
+  )+
+  theme_minimal()
 
 hist(resultados_n1000, breaks = 30, probability = TRUE,
      main = "Distribución del estimador truncado (n = 1000)",
