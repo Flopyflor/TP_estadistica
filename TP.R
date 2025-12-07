@@ -640,5 +640,172 @@ ggplotly(plot)
 
 # Notese la diferencia de escala entre el gráfico del sesgo y el de la varianza
 
+################################################
+##                Parte 3.1
+################################################
+
+## 2. Aplique a un caso ficticio con npre = npost = 100, Se = 0.9, Sp = 0.95, θpre = 0.2 
+#y θpost = 0.15 y α = 0.05. ¿Qué ocurre si achicamos los tamaños de muestra?
+
+calcular_t_obs=function(muestra_post,muestra_prev,Se=0.9,Sp=0.95){
+  n=length(muestra_post)
+  X_raya=mean(muestra_post-muestra_prev)/(Se+Sp-1)
+  #le sumamos un epsilon para prevenir divisiones por 0
+  var_X=(var(muestra_post)+var(muestra_prev))/((Se+Sp-1)**2)+0.000000001
+  return(sqrt(n)*abs(X_raya)/sqrt(var_X))
+}
+
+ns=c(10,20,50,70,100)
+Se=0.9
+Sp=0.95
+theta_post=0.15
+theta_prev=0.20
+alpha=0.05
 
 
+z_alpha=qnorm(1-alpha/2)
+p_prev=calcular_p(Se,Sp,theta_prev)
+p_post=calcular_p(Se,Sp,theta_post)
+
+for (n in ns){
+  muestra_prev=rbinom(n,1,p_prev)
+  muestra_post=rbinom(n,1,p_post)
+  t_obs=calcular_t_obs(muestra_post,muestra_prev,Se,Sp)
+  print(t_obs)
+  if (t_obs>=z_alpha){
+   print(paste0("Tenemos suficiente evidencia estadistica para rechazar H0 con nivel ",alpha," con ",n," muestras"))
+  }
+  else{
+    print(paste0("NO tenemos suficiente evidencia estadistica para rechazar H0 con nivel ",alpha," con ",n," muestras"))
+  }
+}
+##############################
+## 3. Construya instervalos de confianza de nivel asint´otico 0.95 para ∆.
+
+ns=c(10,20,50,70,100,200,500)
+Se=0.9
+Sp=0.95
+theta_post=0.15
+theta_prev=0.20
+alpha=0.05
+
+
+z_alpha=qnorm(1-alpha/2)
+p_prev=calcular_p(Se,Sp,theta_prev)
+p_post=calcular_p(Se,Sp,theta_post)
+
+
+invtervalo_asintotico_test=
+  function(muestra_post,muestra_prev,Se=0.9,Sp=0.95,alpha=0.05){
+    z_alpha=qnorm(1-alpha/2)
+    n=length(muestra_post)
+    X_raya=mean(muestra_post-muestra_prev)/(Se+Sp-1)
+    #le sumamos un epsilon para prevenir divisiones por 0
+    var_X=(var(muestra_post)+var(muestra_prev))/((Se+Sp-1)**2)+0.000000001
+    return(list(
+      'inicio'= X_raya - z_alpha*sqrt(var_X)/sqrt(n),
+      'fin' = X_raya + z_alpha*sqrt(var_X)/sqrt(n)
+    ))
+    
+  
+  }
+
+#Miremos su cobertura
+coverturas <- data.frame(N=c(), n=c(), titahat=c(), inicio=c(), fin=c(), cubre=c())
+valor_real=theta_post-theta_prev
+
+
+# hacemos las simulaciones
+for (n in ns){ 
+  for (i in 1:N_rep){
+    muestra_prev=rbinom(n,1,p_prev)
+    muestra_post=rbinom(n,1,p_post)
+    intervalo = invtervalo_asintotico_test(muestra_post,muestra_prev)
+    inicio = intervalo$inicio
+    fin = intervalo$fin
+    cubre = inicio <= valor_real && valor_real <= fin
+    
+    # guardamos los datos
+    coverturas = rbind(coverturas, 
+                       list('N'=i, 'n'=n, 'titahat'=tita_hat, 'inicio'=inicio, 
+                            'fin'=fin, 'cubre'=cubre))
+    
+  }
+}
+
+# graficamos
+
+coverturas_graph = coverturas[coverturas$N <= 100, ]
+
+plot = ggplot(coverturas_graph, aes(y = N, x=inicio, xend=fin, color=cubre, frame=n))+
+  geom_segment(aes(yend=N), linewidth=1)+
+  geom_vline(xintercept=valor_real, linetype='dashed', color="black")+
+  scale_color_manual(values = c("red", "blue"), labels = c("No cubre", "Cubre"))+
+  labs(
+    title=expression("Intervalos de confianza para"~valor_real~
+                       ", \nde las primeras 100 simulaciones"),
+    x = expression("Valor de"~valor_real),
+    y = "Número de simulación",
+    color="Cubre?"
+  )+
+  theme_minimal()+
+  theme(axis.text.y = element_blank())
+
+ggplotly(plot)
+
+for (n in ns){
+  porcentaje_covertura = sum(coverturas[coverturas$n == n, ]$cubre)/N*100
+  print(paste0('El porcentaje de covertura con ', n, ' muestras en ', N_rep, 
+               ' simulaciones es de ', porcentaje_covertura, '%'))
+}
+################################
+#4.Fijado el tamaño de muestras npre y npost, calcule el nivel empírico del test, es decir, 
+#genere N rep muestras con los tamaños establecidos y calcule la proporción de 
+#rechazos a nivel 0.05. Utilice tamaños de muesras pequeños y grandes.
+
+calcular_t_obs=function(muestra_post,muestra_prev,Se=0.9,Sp=0.95){
+  n=length(muestra_post)
+  X_raya=mean(muestra_post-muestra_prev)/(Se+Sp-1)
+  #le sumamos un epsilon para prevenir divisiones por 0
+  var_X=(var(muestra_post)+var(muestra_prev))/((Se+Sp-1)**2)+0.000000001
+  return(sqrt(n)*abs(X_raya)/sqrt(var_X))
+}
+
+ns=c(10,20,50,70,100,200,500)
+Se=0.9
+Sp=0.95
+#tomamos theta post = theta prev ya que el nivel se ve bajo H0
+theta_post=0.20
+theta_prev=0.20 
+alpha=0.05
+
+
+z_alpha=qnorm(1-alpha/2)
+p_prev=calcular_p(Se,Sp,theta_prev)
+p_post=calcular_p(Se,Sp,theta_post)
+
+N_rep=1000
+niveles=rep(NaN,length(ns))
+j=1
+for (n in ns){
+  
+  rechazos=0
+  
+  for (i in 1:N_rep){
+    muestra_prev=rbinom(n,1,p_prev)
+    muestra_post=rbinom(n,1,p_post)
+    t_obs=calcular_t_obs(muestra_post,muestra_prev,Se,Sp)
+    if (t_obs>=z_alpha){
+      rechazos=rechazos+1
+    }
+  }
+  niveles[j]=rechazos/N_rep
+  j=j+1
+  print(paste0('El nivel empírico del test con ', n, ' muestras en ', N_rep, 
+               ' simulaciones es de ',rechazos/N_rep))
+}
+
+# Flor porfi esta la idea 
+plot(ns,niveles)
+lines(ns,niveles)
+lines(seq(0,500,length.out=2),c(0.05,0.05))
