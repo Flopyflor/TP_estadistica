@@ -700,6 +700,7 @@ Sp=0.95
 theta_post=0.15
 theta_prev=0.20
 alpha=0.05
+N_rep = 500
 
 
 z_alpha=qnorm(1-alpha/2)
@@ -708,7 +709,7 @@ p_post=calcular_p(Se,Sp,theta_post)
 
 
 invtervalo_asintotico_test=
-  function(muestra_post,muestra_prev,Se=0.9,Sp=0.95,alpha=0.05){
+  function(muestra_post, muestra_prev, Se=0.9, Sp=0.95, alpha=0.05){
     z_alpha=qnorm(1-alpha/2)
     n=length(muestra_post)
     X_raya=mean(muestra_post-muestra_prev)/(Se+Sp-1)
@@ -723,7 +724,7 @@ invtervalo_asintotico_test=
   }
 
 #Miremos su cobertura
-coberturas <- data.frame(N=c(), n=c(), titahat=c(), inicio=c(), fin=c(), cubre=c())
+coberturas <- data.frame(N=c(), n=c(), inicio=c(), fin=c(), cubre=c())
 valor_real=theta_post-theta_prev
 
 
@@ -739,7 +740,7 @@ for (n in ns){
     
     # guardamos los datos
     coberturas = rbind(coberturas, 
-                       list('N'=i, 'n'=n, 'titahat'=tita_hat, 'inicio'=inicio, 
+                       list('N'=i, 'n'=n, 'inicio'=inicio, 
                             'fin'=fin, 'cubre'=cubre))
     
   }
@@ -752,11 +753,10 @@ coberturas_graph = coberturas[coberturas$N <= 100, ]
 plot = ggplot(coberturas_graph, aes(y = N, x=inicio, xend=fin, color=cubre, frame=n))+
   geom_segment(aes(yend=N), linewidth=1)+
   geom_vline(xintercept=valor_real, linetype='dashed', color="black")+
-  scale_color_manual(values = c("red", "blue"), labels = c("No cubre", "Cubre"))+
+  scale_color_manual(values = c("tomato", "royalblue"), labels = c("No cubre", "Cubre"))+
   labs(
-    title=expression("Intervalos de confianza para"~valor_real~
-                       ", \nde las primeras 100 simulaciones"),
-    x = expression("Valor de"~valor_real),
+    title="Intervalos de confianza para delta, \nde las primeras 100 simulaciones",
+    x = "Valor de delta",
     y = "Número de simulación",
     color="Cubre?"
   )+
@@ -766,7 +766,7 @@ plot = ggplot(coberturas_graph, aes(y = N, x=inicio, xend=fin, color=cubre, fram
 ggplotly(plot)
 
 for (n in ns){
-  porcentaje_cobertura = sum(coberturas[coberturas$n == n, ]$cubre)/N*100
+  porcentaje_cobertura = sum(coberturas[coberturas$n == n, ]$cubre)/N_rep*100
   print(paste0('El porcentaje de cobertura con ', n, ' muestras en ', N_rep, 
                ' simulaciones es de ', porcentaje_cobertura, '%'))
 }
@@ -817,8 +817,20 @@ for (n in ns){
                ' simulaciones es de ',rechazos/N_rep))
 }
 
-# Flor porfi esta la idea 
-plot(ns,niveles)
-lines(ns,niveles)
-lines(seq(0,500,length.out=2),c(0.05,0.05))
+
+datos = data.frame(n = ns, nivel=niveles)
+
+plot = ggplot(datos, aes(n, nivel))+
+  geom_line(linewidth = 1, color='seagreen')+
+  geom_point(color='seagreen')+
+  geom_hline(yintercept=0.05, linetype="dashed")+
+  theme_minimal()+
+  labs(
+    title='Nivel empírico del test según n',
+    y='Nivel del test',
+    x='Valor de n'
+  )
+
+ggplotly(plot)
+
 
