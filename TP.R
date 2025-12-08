@@ -31,7 +31,7 @@ calculo_intervalo = function(tita_hat, n){
   ))
 }
 
-Coberturas <- data.frame(N=c(), n=c(), titahat=c(), inicio=c(), fin=c(), cubre=c())
+coberturas <- data.frame(N=c(), n=c(), titahat=c(), inicio=c(), fin=c(), cubre=c())
 
 # hacemos las simulaciones
 for (n in n_s){ 
@@ -45,7 +45,7 @@ for (n in n_s){
     cubre = inicio <= tita && tita <= fin
     
     # guardamos los datos
-    Coberturas = rbind(Coberturas, 
+    coberturas = rbind(coberturas, 
                        list('N'=i, 'n'=n, 'titahat'=tita_hat, 'inicio'=inicio, 
                             'fin'=fin, 'cubre'=cubre))
     
@@ -54,9 +54,9 @@ for (n in n_s){
 
 # graficamos
 
-Coberturas_graph = Coberturas[Coberturas$N <= 100, ]
+coberturas_graph = coberturas[coberturas$N <= 100, ]
 
-plot = ggplot(Coberturas_graph, aes(y = N, x=inicio, xend=fin, color=cubre, frame=n))+
+plot = ggplot(coberturas_graph, aes(y = N, x=inicio, xend=fin, color=cubre, frame=n))+
   geom_segment(aes(yend=N), linewidth=1)+
   geom_vline(xintercept=tita, linetype='dashed', color="black")+
   scale_color_manual(values = c("red", "blue"), labels = c("No cubre", "Cubre"))+
@@ -71,11 +71,11 @@ plot = ggplot(Coberturas_graph, aes(y = N, x=inicio, xend=fin, color=cubre, fram
 
 ggplotly(plot)
 
-# imprimimos por consola el porcentaje de Cobertura
+# imprimimos por consola el porcentaje de cobertura
 for (n in n_s){
-  porcentaje_Cobertura = sum(Coberturas[Coberturas$n == n, ]$cubre)/N*100
-  print(paste0('El porcentaje de Cobertura con ', n, ' muestras en ', N, 
-               ' simulaciones es de ', porcentaje_Cobertura, '%'))
+  porcentaje_cobertura = sum(coberturas[coberturas$n == n, ]$cubre)/N*100
+  print(paste0('El porcentaje de cobertura con ', n, ' muestras en ', N, 
+               ' simulaciones es de ', porcentaje_cobertura, '%'))
 }
 
 
