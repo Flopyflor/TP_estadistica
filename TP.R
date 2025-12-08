@@ -663,12 +663,14 @@ tita_hats = simular_estimador(N, n, theta_verdadero, Se, Sp)
 tita_hats = data.frame(tita_hat = tita_hats)
 
 # vemos que es normal
-ggplot(tita_hats, aes(sample = tita_hat)) +
+tita_hats$asintotico=(tita_hats$tita_hat-theta_verdadero)*sqrt(N)
+
+ggplot(tita_hats, aes(sample = asintotico)) +
   stat_qq() +
   stat_qq_line(color = "red")+
   theme_minimal()+
   labs(
-    title="QQ-Norm de los estimadores de tita",
+    title="QQ-Norm de la distribucion asintotica de los estimadores de tita",
     x='Cuantiles Teóricos',
     y='Cuantiles Reales'
   )
@@ -679,7 +681,7 @@ ggplot(tita_hats, aes(sample = tita_hat)) +
 sd_tita_hat = sd(tita_hats$tita_hat*sqrt(N))
 mean_tita_hat = mean((tita_hats$tita_hat-theta_verdadero)*sqrt(N))
 
-ggplot(tita_hats, aes(x=(tita_hat-theta_verdadero)*sqrt(N)))+
+ggplot(tita_hats, aes(x=asintotico))+
   geom_histogram(aes(y=after_stat(density)), bins = 16,
                      fill='pink', color='black')+
   stat_function(
@@ -690,14 +692,14 @@ ggplot(tita_hats, aes(x=(tita_hat-theta_verdadero)*sqrt(N)))+
   linetype = "dashed"
 )+
   labs(
-    title = "Distribución del estimador truncado",
+    title = "Distribución asintótica del estimador truncado",
     x = "Valor del estimador Bootstrap",
     y = "Densidad"
   )+
   theme_minimal()
 
-
-
+sd_tita_hat
+mean_tita_hat
 ################################################
 ##                Parte 3.1
 ################################################
